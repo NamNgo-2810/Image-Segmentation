@@ -18,22 +18,20 @@ import cv2, imutils
 
 # noinspection PyPep8Naming
 from kmeans_clustering import kmeans_clustering
+from region_growing import region_growing
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1140, 861)
+        MainWindow.resize(1000, 750)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.choose_image_button = QPushButton(self.centralwidget)
         self.choose_image_button.setObjectName(u"choose_image_button")
         self.choose_image_button.setGeometry(QRect(50, 80, 131, 41))
         self.choose_image_button.clicked.connect(self.loadImage)
-        self.save_image_button = QPushButton(self.centralwidget)
-        self.save_image_button.setObjectName(u"save_image_button")
-        self.save_image_button.setGeometry(QRect(50, 140, 131, 41))
         self.kmean_label = QLabel(self.centralwidget)
         self.kmean_label.setObjectName(u"kmean_label")
         self.kmean_label.setGeometry(QRect(660, 20, 121, 40))
@@ -46,17 +44,17 @@ class Ui_MainWindow(object):
         self.region_grow_label.setFont(font)
         self.source_image_frame = QLabel(self.centralwidget)
         self.source_image_frame.setObjectName(u"source_image_frame")
-        self.source_image_frame.setGeometry(QRect(50, 260, 320, 320))
+        self.source_image_frame.setGeometry(QRect(50, 260, 256, 256))
         self.source_image_frame.setPixmap(QPixmap(u"example.jpg"))
         self.source_image_frame.setScaledContents(True)
         self.kmean_image_frame = QLabel(self.centralwidget)
         self.kmean_image_frame.setObjectName(u"kmean_image_frame")
-        self.kmean_image_frame.setGeometry(QRect(660, 70, 320, 320))
+        self.kmean_image_frame.setGeometry(QRect(660, 70, 256, 256))
         self.kmean_image_frame.setPixmap(QPixmap(u"example.jpg"))
         self.kmean_image_frame.setScaledContents(True)
         self.region_grow_image_frame = QLabel(self.centralwidget)
         self.region_grow_image_frame.setObjectName(u"region_grow_image_frame")
-        self.region_grow_image_frame.setGeometry(QRect(660, 460, 320, 320))
+        self.region_grow_image_frame.setGeometry(QRect(660, 460, 256, 256))
         self.region_grow_image_frame.setPixmap(QPixmap(u"example.jpg"))
         self.region_grow_image_frame.setScaledContents(True)
         self.source_image_label = QLabel(self.centralwidget)
@@ -86,6 +84,7 @@ class Ui_MainWindow(object):
         self.image = cv2.imread(self.filename)
         self.setPhoto(self.image)
         self.setKMeansPhoto(self.image)
+        self.setRegionGrowPhoto(self.image)
 
     def setPhoto(self, image):
         """
@@ -94,7 +93,7 @@ class Ui_MainWindow(object):
         :return:
         """
         height, width, _ = image.shape
-        image = imutils.resize(image, width=320, height=320)
+        image = imutils.resize(image, width=256, height=256)
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format_RGB888)
         self.source_image_frame.setPixmap(QPixmap.fromImage(image))
@@ -108,9 +107,9 @@ class Ui_MainWindow(object):
 
         # Apply algorithm
         self.kmean_photo = kmeans_clustering(image)
-        self.kmean_photo = imutils.resize(self.kmean_photo, width=320, height=320)
+        self.kmean_photo = imutils.resize(self.kmean_photo, width=256, height=256)
         frame = cv2.cvtColor(self.kmean_photo, cv2.COLOR_BGR2RGB)
-        self.kmean_photo =  QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format_RGB888)
+        self.kmean_photo = QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format_RGB888)
         self.kmean_image_frame.setPixmap(QPixmap.fromImage(self.kmean_photo))
 
     def setRegionGrowPhoto(self, image):
@@ -121,12 +120,15 @@ class Ui_MainWindow(object):
         """
         self.region_grow_photo = image
         # Apply algorithm
-        self.region_grow_image_frame.setPixmap(QPixmap.fromImage(image))
+        self.region_grow_photo = region_growing(image, ("mri.jpg" in self.filename or "CT.jpg" in self.filename))
+        self.region_grow_photo = imutils.resize(self.region_grow_photo, width=256, height=256)
+        frame = cv2.cvtColor(self.region_grow_photo, cv2.COLOR_BGR2RGB)
+        self.region_grow_photo = QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format_RGB888)
+        self.region_grow_image_frame.setPixmap(QPixmap.fromImage(self.region_grow_photo))
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.choose_image_button.setText(QCoreApplication.translate("MainWindow", u"Choose Image", None))
-        self.save_image_button.setText(QCoreApplication.translate("MainWindow", u"Save Image", None))
         self.kmean_label.setText(QCoreApplication.translate("MainWindow", u"K-Means", None))
         self.region_grow_label.setText(QCoreApplication.translate("MainWindow", u"Region Grow", None))
         self.source_image_frame.setText("")
